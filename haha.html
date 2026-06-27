@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pixel Heart Loader</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --ink: #000000;
+      --heart: #e31b23;
+      --bar-bg: #ffffff;
+      --bar-fill: #e31b23;
+    }
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: var(--bg);
+      font-family: monospace;
+      color: var(--ink);
+    }
+    .wrap {
+      height: 100%;
+      display: grid;
+      place-items: center;
+    }
+    canvas {
+      image-rendering: pixelated;
+      display: block;
+    }
+    .label {
+      font-weight: bold;
+      font-size: 14px;
+      text-align: center;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div>
+      <canvas id="heartCanvas" width="180" height="160"></canvas>
+      <canvas id="barCanvas" width="200" height="30"></canvas>
+      <div class="label" id="percent">0%</div>
+    </div>
+  </div>
+
+  <script>
+    const HEART = [
+      [0,1,1,0,0,0,0,1,1,0,0,0],
+      [1,1,1,1,0,0,1,1,1,1,0,0],
+      [1,1,1,1,1,1,1,1,1,1,0,0],
+      [1,1,1,1,1,1,1,1,1,1,1,0],
+      [0,1,1,1,1,1,1,1,1,1,0,0],
+      [0,0,1,1,1,1,1,1,1,0,0,0],
+      [0,0,0,1,1,1,1,1,0,0,0,0],
+      [0,0,0,0,1,1,1,0,0,0,0,0],
+      [0,0,0,0,0,1,0,0,0,0,0,0]
+    ];
+
+    const heartCanvas = document.getElementById('heartCanvas');
+    const hc = heartCanvas.getContext('2d');
+    const PX = 14;
+
+    const heartOffsetX = Math.floor((heartCanvas.width - HEART[0].length * PX) / 2);
+    const heartOffsetY = Math.floor((heartCanvas.height - HEART.length * PX) / 2);
+
+    function drawHeart(scale=1) {
+      hc.clearRect(0, 0, heartCanvas.width, heartCanvas.height);
+      hc.save();
+      hc.translate(heartCanvas.width/2, heartCanvas.height/2);
+      hc.scale(scale, scale);
+      hc.translate(-heartCanvas.width/2, -heartCanvas.height/2);
+
+      for (let y=0; y<HEART.length; y++) {
+        for (let x=0; x<HEART[0].length; x++) {
+          if (HEART[y][x]) {
+            hc.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--heart').trim();
+            hc.fillRect(heartOffsetX + x*PX, heartOffsetY + y*PX, PX, PX);
+            hc.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim();
+            hc.strokeRect(heartOffsetX + x*PX, heartOffsetY + y*PX, PX, PX);
+          }
+        }
+      }
+      hc.restore();
+    }
+
+    const barCanvas = document.getElementById('barCanvas');
+    const bc = barCanvas.getContext('2d');
+
+    function drawBar(percent) {
+      bc.clearRect(0, 0, barCanvas.width, barCanvas.height);
+      let totalPixels = 20;
+      let filledPixels = Math.floor(totalPixels * percent);
+
+      for (let i=0; i<totalPixels; i++) {
+        let color = i < filledPixels ? '--bar-fill' : '--bar-bg';
+        bc.fillStyle = getComputedStyle(document.documentElement).getPropertyValue(color).trim();
+        bc.fillRect(i*10, 0, 10, 20);
+        bc.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim();
+        bc.strokeRect(i*10, 0, 10, 20);
+      }
+    }
+
+    let t0 = performance.now();
+    let duration = 3000;
+    const percentEl = document.getElementById('percent');
+
+    function animate(now) {
+      const t = (now - t0) % duration;
+      const p = t / duration;
+      drawHeart(1 + Math.sin(p * Math.PI * 2) * 0.05);
+      drawBar(p);
+      percentEl.textContent = Math.round(p*100) + '%';
+      requestAnimationFrame(animate);
+    }
+
+    drawHeart();
+    drawBar(0);
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>
